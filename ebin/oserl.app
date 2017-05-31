@@ -6,6 +6,7 @@
         gen_esme,
         gen_mc_session,
         gen_mc,
+        proxy_protocol,
         smpp_base,
         smpp_base_syntax,
         smpp_disk_log_hlr,
