@@ -222,7 +222,7 @@ handle_accept(Pid, Sock, ProxyIpList) ->
     case inet:peername(Sock) of
         {ok, {Addr, _Port}} ->
             lager:debug("sync_send_event accept to pid:~p Addr:~p, proxy_ip_list: ~p", [Pid, Addr, ProxyIpList]),
-            case lists:meber(Addr, ProxyIpList) of
+            case lists:member(Addr, ProxyIpList) of
                 true -> case proxy_protocol:accept(Sock) of
                             {ok, {proxy_opts, _IpVersion, SourceAddress, DestAddress, SourcePort, DestPort, ConnectionInfo}} ->
                                 gen_fsm:sync_send_event(Pid,
