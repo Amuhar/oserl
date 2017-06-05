@@ -7,6 +7,7 @@
         gen_mc_session,
         gen_mc,
         proxy_protocol,
+        time,
         smpp_base,
         smpp_base_syntax,
         smpp_disk_log_hlr,

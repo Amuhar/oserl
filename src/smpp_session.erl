@@ -70,7 +70,7 @@
 %% instant congestion state value is calculated.  Notice this value cannot be
 %% greater than 99.
 congestion(CongestionSt, WaitTime, Timestamp) ->
-    case (timer:now_diff(erlang:timestamp(), Timestamp) div (WaitTime + 1)) * 85 of
+    case (timer:now_diff(time:timestamp(), Timestamp) div (WaitTime + 1)) * 85 of
         Val when Val < 1 ->
             0;
         Val when Val > 99 ->  % Out of bounds
@@ -166,12 +166,11 @@ wait_recv(Pid, Sock, Log) ->
 
 
 recv_loop(Pid, Sock, Buffer, Log) ->
-    Timestamp = erlang:monotonic_time(),
+    Timestamp = time:timestamp(),
     inet:setopts(Sock, [{active, once}]),
     receive
         {tcp, Sock, Input} ->
-            Diff = erlang:monotonic_time() - Timestamp,
-            L = erlang:convert_time_unit(Diff, native, micro_seconds),
+            L = timer:now_diff(time:timestamp(), Timestamp),
             B = handle_input(Pid, list_to_binary([Buffer, Input]), L, 1, Log),
             ?MODULE:recv_loop(Pid, Sock, B, Log);
         {tcp_closed, Sock} ->
@@ -238,7 +237,7 @@ handle_accept(Pid, Sock, ProxyIpList) ->
     end.
 
 handle_input(Pid, <<CmdLen:32, Rest/binary>> = Buffer, Lapse, N, Log) ->
-    Now = erlang:timestamp(), % PDU received.  PDU handling starts now!
+    Now = time:timestamp(), % PDU received.  PDU handling starts now!
     Len = CmdLen - 4,
     case Rest of
         <<PduRest:Len/binary-unit:8, NextPdus/binary>> ->
