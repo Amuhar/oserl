@@ -91,7 +91,7 @@
          enquire_link_timer,
          inactivity_timer,
          enquire_link_resp_timer,
-         proxy_protocol = false}).
+         proxy_ip_list = []}).
 
 %%%-----------------------------------------------------------------------------
 %%% BEHAVIOUR EXPORTS
@@ -162,14 +162,13 @@ outbind(FsmRef, Params) ->
 init([Mod, Mc, Opts]) ->
     _Ref = erlang:monitor(process, Mc),
     Timers = proplists:get_value(timers, Opts, ?DEFAULT_TIMERS_SMPP),
-    ProxyProtocol = proplists:get_value(proxy_protocol, Opts, false),
-    lager:debug("init gen_mc_session, proxy_protocol ~p", [ProxyProtocol]),
+    ProxyIpList= proplists:get_value(proxy_ip_list, Opts, false),
     Log = proplists:get_value(log, Opts),
     case proplists:get_value(lsock, Opts) of
         undefined ->
             init_open(Mod, Mc, proplists:get_value(sock, Opts), Timers, Log);
         LSock ->
-            init_listen(Mod, Mc, LSock, Timers, Log, ProxyProtocol)
+            init_listen(Mod, Mc, LSock, Timers, Log, ProxyIpList)
     end.
 
 
@@ -190,9 +189,9 @@ init_open(Mod, Mc, Sock, Tmr, Log) ->
                        start_timer(Tmr, enquire_link_timer)}}.
 
 
-init_listen(Mod, Mc, LSock, Tmr, Log, ProxyProtocol) ->
+init_listen(Mod, Mc, LSock, Tmr, Log, ProxyIpList) ->
     Self = self(),
-    Pid = spawn_link(smpp_session, wait_accept, [Self, LSock, Log, ProxyProtocol]),
+    Pid = spawn_link(smpp_session, wait_accept, [Self, LSock, Log, ProxyIpList]),
     {ok, listen, #st{mc = Mc,
                      mod = Mod,
                      log = Log,
@@ -200,7 +199,7 @@ init_listen(Mod, Mc, LSock, Tmr, Log, ProxyProtocol) ->
                      req_tab = smpp_req_tab:new(),
                      op_tab = smpp_req_tab:new(),
                      timers = Tmr,
-                     proxy_protocol = ProxyProtocol}}.
+                     proxy_ip_list = ProxyIpList}}.
 
 
 terminate(_Reason, _Stn, Std) ->
