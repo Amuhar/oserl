@@ -12,6 +12,8 @@
                       connection_info = []}).
 -opaque proxy_opts() :: #proxy_opts{}.
 
+-define(WAITING_TIMEOUT, 10000).
+
 -export_type([proxy_opts/0]).
 %%%-----------------------------------------------------------------------------
 %%% EXPORTS
@@ -40,6 +42,7 @@ accept(Sock) ->
                                            connection_info = ConnectionInfo}};
                       _ ->
                           gen_tcp:close(Sock),
+                          lager:error("Not proxy protocol"),
                           {error, not_proxy_protocol}
                   end;
               _Unsupported ->
@@ -48,6 +51,11 @@ accept(Sock) ->
             end;
         {_, _CSocket, Data} ->
             lager:notice("data: ~p", [Data])
+    after
+        ?WAITING_TIMEOUT ->
+            gen_tcp:close(Sock),
+            lager:error("Proxy protocol header expected but not received"),
+            {error, timeout}
     end.
 
 %%%-----------------------------------------------------------------------------
