@@ -1,8 +1,12 @@
 -module(proxy_protocol).
 
+-behaviour(gen_server).
+
 -include("proxy_protocol.hrl").
 
--export([accept/1]).
+-export([start_link/0, accept/2]).
+
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -record(proxy_opts, { inet_version :: ipv4|ipv6,
                       source_address :: inet:ip_address(),
@@ -10,15 +14,49 @@
                       source_port :: inet:port_number(),
                       dest_port :: inet:port_number(),
                       connection_info = []}).
+
+-record(st, {}).
+
 -opaque proxy_opts() :: #proxy_opts{}.
 
 -define(WAITING_TIMEOUT, 10000).
 
 -export_type([proxy_opts/0]).
 %%%-----------------------------------------------------------------------------
-%%% EXPORTS
+%%% API
 %%%-----------------------------------------------------------------------------
-accept(Sock) ->
+start_link() ->
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+
+accept(ServerPid, Sock) ->
+    gen_server:call(ServerPid, {accept, Sock}).
+
+%%%-----------------------------------------------------------------------------
+%%% GEN SERVER
+%%%-----------------------------------------------------------------------------
+init([]) ->
+    {ok, #st{}}.
+
+handle_cast(_Msg, St) ->
+    {stop, unknown_request, St}.
+
+handle_call({accept, Sock}, _From, St) ->
+    Reply = do_handle_accept(Sock),
+    {reply, Reply, St};
+handle_call(_Msg, _From, St) ->
+    {stop, unknown_request, St}.
+
+handle_info(_Info, St) ->
+    {noreply, St}.
+
+code_change(_OldVsn, St, _Extra) -> {ok, St}.
+
+terminate(_Reason, #st{}) -> ok.
+
+%%%-----------------------------------------------------------------------------
+%%% INTERNAL FUNCTIONS
+%%%-----------------------------------------------------------------------------
+do_handle_accept(Sock) ->
     inet:setopts(Sock, [{active, once}, {packet, line}]),
     receive
       {_, CSocket, <<"\r\n">>} ->
@@ -58,9 +96,6 @@ accept(Sock) ->
             {error, timeout}
     end.
 
-%%%-----------------------------------------------------------------------------
-%%% INTERNAL FUNCTIONS
-%%%-----------------------------------------------------------------------------
 parse_proxy_protocol_v2(<<?HEADER, (?VSN):4, 0:4, X:4, Y:4, Len:16>>) ->
     {local, family(X), protocol(Y), Len};
 parse_proxy_protocol_v2(<<?HEADER, (?VSN):4, 1:4, X:4, Y:4, Len:16>>) ->
