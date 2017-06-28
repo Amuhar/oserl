@@ -12,7 +12,7 @@
                       connection_info = []}).
 -opaque proxy_opts() :: #proxy_opts{}.
 
--define(WAITING_TIMEOUT, 10000).
+-define(WAITING_TIMEOUT, 1000).
 
 -export_type([proxy_opts/0]).
 %%%-----------------------------------------------------------------------------
