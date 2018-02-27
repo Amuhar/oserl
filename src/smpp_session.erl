@@ -243,7 +243,7 @@ handle_input(Pid, <<CmdLen:32, _Rest/binary>> = Buffer, Lapse, N, Log) ->
         true ->
             Event = {error, 0, ?ESME_RINVCMDLEN, 0},
             gen_fsm:send_all_state_event(Pid, Event),
-            Buffer;
+            <<>>;
         false -> do_handle_input(Pid, Buffer, Lapse, N, Log)
     end.
 
