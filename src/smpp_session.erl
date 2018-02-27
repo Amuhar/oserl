@@ -55,6 +55,8 @@
               [binary, {packet, 0}, {active, false}, {reuseaddr, true}, {ip, Ip}]
         end).
 
+-define(MAX_COMMAND_LENGTH, 1000000). % ~1 megabyte
+
 %%%-----------------------------------------------------------------------------
 %%% EXTERNAL EXPORTS
 %%%-----------------------------------------------------------------------------
@@ -236,7 +238,16 @@ handle_accept(Pid, Sock, ProxyIpList) ->
             false
     end.
 
-handle_input(Pid, <<CmdLen:32, Rest/binary>> = Buffer, Lapse, N, Log) ->
+handle_input(Pid, <<CmdLen:32, _Rest/binary>> = Buffer, Lapse, N, Log) ->
+    case CmdLen > ?MAX_COMMAND_LENGTH of
+        true ->
+            Event = {error, 0, ?ESME_RINVCMDLEN, 0},
+            gen_fsm:send_all_state_event(Pid, Event),
+            Buffer;
+        false -> do_handle_input(Pid, Buffer, Lapse, N, Log)
+    end.
+
+do_handle_input(Pid, <<CmdLen:32, Rest/binary>> = Buffer, Lapse, N, Log) ->
     Now = time:timestamp(), % PDU received.  PDU handling starts now!
     Len = CmdLen - 4,
     case Rest of
@@ -257,8 +268,16 @@ handle_input(Pid, <<CmdLen:32, Rest/binary>> = Buffer, Lapse, N, Log) ->
             end,
             % The buffer may carry more than one SMPP PDU.
             handle_input(Pid, NextPdus, Lapse, N + 1, Log);
+        <<CmdId:32, _IncompletePduRest/binary>> ->
+            case ?VALID_COMMAND_ID(CmdId) of
+                true -> Buffer;
+                false ->
+                    Event = {error, CmdId, ?ESME_RINVCMDID, 0},
+                    gen_fsm:send_all_state_event(Pid, Event),
+                    Buffer
+            end;
         _IncompletePdu ->
             Buffer
     end;
-handle_input(_Pid, Buffer, _Lapse, _N, _Log) ->
+do_handle_input(_Pid, Buffer, _Lapse, _N, _Log) ->
     Buffer.
