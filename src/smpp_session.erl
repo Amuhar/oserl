@@ -244,7 +244,9 @@ handle_input(Pid, <<CmdLen:32, _Rest/binary>> = Buffer, Lapse, N, Log) ->
             gen_fsm:send_all_state_event(Pid, {sock_error, ?ESME_RINVCMDLEN}),
             <<>>;
         false -> do_handle_input(Pid, Buffer, Lapse, N, Log)
-    end.
+    end;
+handle_input(_Pid, Buffer, _Lapse, _N, _Log) ->
+    Buffer.
 
 do_handle_input(Pid, <<CmdLen:32, Rest/binary>> = Buffer, Lapse, N, Log) ->
     Now = time:timestamp(), % PDU received.  PDU handling starts now!
