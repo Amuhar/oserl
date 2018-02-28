@@ -241,8 +241,7 @@ handle_accept(Pid, Sock, ProxyIpList) ->
 handle_input(Pid, <<CmdLen:32, _Rest/binary>> = Buffer, Lapse, N, Log) ->
     case CmdLen > ?MAX_COMMAND_LENGTH of
         true ->
-            Event = {error, 0, ?ESME_RINVCMDLEN, 0},
-            gen_fsm:send_all_state_event(Pid, Event),
+            gen_fsm:send_all_state_event(Pid, {sock_error, ?ESME_RINVCMDLEN}),
             <<>>;
         false -> do_handle_input(Pid, Buffer, Lapse, N, Log)
     end.
@@ -272,9 +271,8 @@ do_handle_input(Pid, <<CmdLen:32, Rest/binary>> = Buffer, Lapse, N, Log) ->
             case ?VALID_COMMAND_ID(CmdId) of
                 true -> Buffer;
                 false ->
-                    Event = {error, CmdId, ?ESME_RINVCMDID, 0},
-                    gen_fsm:send_all_state_event(Pid, Event),
-                    Buffer
+                    gen_fsm:send_all_state_event(Pid, {sock_error, ?ESME_RINVCMDID}),
+                    <<>>
             end;
         _IncompletePdu ->
             Buffer
