@@ -40,7 +40,7 @@
 -define(HIGH_PRIORITY, 0).
 -define(MATCH_SPEC, [{'_', [], [{message, {return_trace}}]}]).
 -define(MAX_TIME, 10000).
--define(ESME_TIMERS, ?TIMERS(15000, 15000, 30000, 20000)).
+-define(ESME_TIMERS, ?TIMERS(15000, 15000, 30000, 20000, 5000, 20000)).
 -define(STUBS_DIR, "../../stubs").  % Tests run in log/ct_run.*
 
 %%%-----------------------------------------------------------------------------

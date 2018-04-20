@@ -190,9 +190,11 @@ cancel_timer(Ref) ->
     gen_fsm:cancel_timer(Ref).
 
 
-start_timer(#timers_smpp{response_time = infinity}, {response_timer, _}) ->
+start_timer(#timers_smpp{mc_response_time = infinity}, {mc_response_timer, _}) ->
     undefined;
-start_timer(#timers_smpp{response_time = infinity}, enquire_link_failure) ->
+start_timer(#timers_smpp{esme_response_time = infinity}, {esme_response_timer, _}) ->
+    undefined;
+start_timer(#timers_smpp{enquire_link_failure_time = infinity}, enquire_link_failure) ->
     undefined;
 start_timer(#timers_smpp{enquire_link_time = infinity}, enquire_link_timer) ->
     undefined;
@@ -200,9 +202,11 @@ start_timer(#timers_smpp{session_init_time = infinity}, session_init_timer) ->
     undefined;
 start_timer(#timers_smpp{inactivity_time = infinity}, inactivity_timer) ->
     undefined;
-start_timer(#timers_smpp{response_time = Time}, {response_timer, _} = Msg) ->
+start_timer(#timers_smpp{mc_response_time = Time}, {mc_response_timer, _} = Msg) ->
     gen_fsm:start_timer(Time, Msg);
-start_timer(#timers_smpp{response_time = Time}, enquire_link_failure) ->
+start_timer(#timers_smpp{esme_response_time = Time}, {esme_response_timer, _} = Msg) ->
+    gen_fsm:start_timer(Time, Msg);
+start_timer(#timers_smpp{enquire_link_failure_time = Time}, enquire_link_failure) ->
     gen_fsm:start_timer(Time, enquire_link_failure);
 start_timer(#timers_smpp{enquire_link_time = Time}, enquire_link_timer) ->
     gen_fsm:start_timer(Time, enquire_link_timer);

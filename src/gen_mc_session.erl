@@ -645,7 +645,7 @@ handle_peer_unbind({?COMMAND_ID_UNBIND, Pdu}, St) ->
 %%%-----------------------------------------------------------------------------
 %%% HANDLE TIMEOUT
 %%%-----------------------------------------------------------------------------
-handle_timeout({response_timer, SeqNum}, St) ->
+handle_timeout({mc_response_timer, SeqNum}, St) ->
     {ok, {SeqNum, CmdId, _, Ref}} = smpp_req_tab:read(St#st.req_tab, SeqNum),
     Status = smpp_operation:request_failure_code(CmdId),
     handle_peer_resp({error, Status}, Ref, St),
@@ -699,7 +699,7 @@ send_request(CmdId, Params, Ref, St) ->
     case smpp_operation:pack(Pdu) of
         {ok, BinPdu} ->
             ok = smpp_session:send_pdu(St#st.sock, BinPdu, St#st.log),
-            RTimer = start_timer(St#st.timers, {response_timer, SeqNum}),
+            RTimer = start_timer(St#st.timers, {mc_response_timer, SeqNum}),
             ok = smpp_req_tab:write(St#st.req_tab, {SeqNum, CmdId, RTimer, Ref}),
             cancel_timer(St#st.enquire_link_timer),
             cancel_timer(St#st.inactivity_timer),

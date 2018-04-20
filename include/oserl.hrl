@@ -79,7 +79,10 @@
 -define(SESSION_INIT_TIME, 180000).  % 3 minutes
 -define(ENQUIRE_LINK_TIME, 60000).   % 1 minute
 -define(INACTIVITY_TIME, infinity).  % No timeout, never drop the session.
--define(RESPONSE_TIME, 60000).       % 1 minute
+
+-define(MC_RESPONSE_TIME, 60000).
+-define(ESME_RESPONSE_TIME, 15000).
+-define(ENQUIRE_LINK_FAILURE_TIME, 60000).
 
 -define(ASSERT_TIME, 120000).        % Two minutes as in TCP SYN_SENT
 -define(CALL_TIME, 5000).
@@ -88,11 +91,14 @@
 %% Timers record
 -define(DEFAULT_TIMERS_SMPP, #timers_smpp{}).
 
--define(TIMERS(STime, ETime, ITime, RTime),
+-define(TIMERS(STime, ETime, ITime, MRTime, ERTime, EFTime),
         #timers_smpp{session_init_time = STime,
                      enquire_link_time = ETime,
                      inactivity_time   = ITime,
-                     response_time     = RTime}).
+                     mc_response_time = MRTime,
+                     esme_response_time = ERTime,
+                     enquire_link_failure_time = EFTime
+                     }).
 
 %%% RECORDS
 %% {timers_smpp, SessionInitTime, EnquireLinkTime, InactivityTime, ResponseTime}
@@ -132,6 +138,8 @@
         {session_init_time = ?SESSION_INIT_TIME,
          enquire_link_time = ?ENQUIRE_LINK_TIME,
          inactivity_time   = ?INACTIVITY_TIME,
-         response_time     = ?RESPONSE_TIME}).
+         mc_response_time = ?MC_RESPONSE_TIME,
+         esme_response_time = ?ESME_RESPONSE_TIME,
+         enquire_link_failure_time = ?ENQUIRE_LINK_FAILURE_TIME}).
 
 -endif.  % -ifndef(oserl)
