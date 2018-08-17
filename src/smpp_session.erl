@@ -245,6 +245,8 @@ handle_accept(Pid, Sock, ProxyIpList) ->
 handle_input(Pid, <<CmdLen:32, _Rest/binary>> = Buffer, Lapse, N, Log) ->
     case CmdLen > ?MAX_COMMAND_LENGTH of
         true ->
+            Reason = smpp_error:format(?ESME_RINVCMDLEN),
+            lager:debug("error during pdu handling: ~s", [Reason]),
             gen_fsm:send_all_state_event(Pid, {sock_error, ?ESME_RINVCMDLEN}),
             <<>>;
         false -> do_handle_input(Pid, Buffer, Lapse, N, Log)
@@ -265,7 +267,9 @@ do_handle_input(Pid, <<CmdLen:32, Rest/binary>> = Buffer, Lapse, N, Log) ->
                     Event = {input, CmdId, Pdu, (Lapse div N), Now},
                     lager:debug("sending pdu to session ~p, sequence_number ~p", [Pid, smpp_operation:get_value(sequence_number,Pdu)]),
                     gen_fsm:send_all_state_event(Pid, Event);
-                {error, _CmdId, _Status, _SeqNum} = Event ->
+                {error, _CmdId, Status, _SeqNum} = Event ->
+                    Reason = smpp_error:format(Status),
+                    lager:debug("error during pdu handling: ~s", [Reason]),
                     gen_fsm:send_all_state_event(Pid, Event);
                 {'EXIT', _What} ->
                     Event = {error, 0, ?ESME_RUNKNOWNERR, 0},
